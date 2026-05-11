@@ -1,0 +1,78 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "trafficManagerProfiles_alzaintmm_name": {
+            "defaultValue": "alzaintmm",
+            "type": "String"
+        },
+        "publicIPAddresses_e_eu_vm_ip_externalid": {
+            "defaultValue": "/subscriptions/4194388a-f5da-4dce-bad2-9e365d164652/resourceGroups/E-EU-RG/providers/Microsoft.Network/publicIPAddresses/e-eu-vm-ip",
+            "type": "String"
+        },
+        "publicIPAddresses_E_USVM_ip_externalid": {
+            "defaultValue": "/subscriptions/4194388a-f5da-4dce-bad2-9e365d164652/resourceGroups/E-US-RG/providers/Microsoft.Network/publicIPAddresses/E-USVM-ip",
+            "type": "String"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.Network/trafficManagerProfiles",
+            "apiVersion": "2024-04-01-preview",
+            "name": "[parameters('trafficManagerProfiles_alzaintmm_name')]",
+            "location": "global",
+            "properties": {
+                "profileStatus": "Enabled",
+                "trafficRoutingMethod": "Weighted",
+                "dnsConfig": {
+                    "relativeName": "[parameters('trafficManagerProfiles_alzaintmm_name')]",
+                    "ttl": 60
+                },
+                "monitorConfig": {
+                    "profileMonitorStatus": "Online",
+                    "protocol": "HTTP",
+                    "port": 80,
+                    "path": "/",
+                    "intervalInSeconds": 30,
+                    "toleratedNumberOfFailures": 3,
+                    "timeoutInSeconds": 10
+                },
+                "endpoints": [
+                    {
+                        "id": "[concat(resourceId('Microsoft.Network/trafficManagerProfiles', parameters('trafficManagerProfiles_alzaintmm_name')), '/azureEndpoints/e-eu-vm')]",
+                        "name": "e-eu-vm",
+                        "type": "Microsoft.Network/trafficManagerProfiles/azureEndpoints",
+                        "properties": {
+                            "endpointStatus": "Enabled",
+                            "endpointMonitorStatus": "Online",
+                            "targetResourceId": "[parameters('publicIPAddresses_e_eu_vm_ip_externalid')]",
+                            "target": "e-euvm.westeurope.cloudapp.azure.com",
+                            "weight": 1,
+                            "priority": 1,
+                            "endpointLocation": "West Europe",
+                            "alwaysServe": "Disabled"
+                        }
+                    },
+                    {
+                        "id": "[concat(resourceId('Microsoft.Network/trafficManagerProfiles', parameters('trafficManagerProfiles_alzaintmm_name')), '/azureEndpoints/e-us-vm')]",
+                        "name": "e-us-vm",
+                        "type": "Microsoft.Network/trafficManagerProfiles/azureEndpoints",
+                        "properties": {
+                            "endpointStatus": "Enabled",
+                            "endpointMonitorStatus": "Online",
+                            "targetResourceId": "[parameters('publicIPAddresses_E_USVM_ip_externalid')]",
+                            "target": "e-usvm.eastus.cloudapp.azure.com",
+                            "weight": 10,
+                            "priority": 2,
+                            "endpointLocation": "East US",
+                            "alwaysServe": "Disabled"
+                        }
+                    }
+                ],
+                "trafficViewEnrollmentStatus": "Disabled",
+                "maxReturn": 0
+            }
+        }
+    ]
+}
